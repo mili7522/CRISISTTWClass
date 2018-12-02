@@ -2,6 +2,9 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
+import json
+import os
+import time
 
 class TTWML():
 
@@ -25,9 +28,8 @@ class TTWML():
     def getParameters(self, parameters = None):
         if parameters is None:
             parameters = self.parameters
-        elif len(parameters) < len(self.parameters):
-            for key, value in self.parameters.items():
-                parameters.setdefault(key, value)
+        for key, value in self.parameters.items():
+            parameters.setdefault(key, value)
         
         return parameters
 
@@ -40,7 +42,9 @@ class TTWML():
         # Replace Gaussian form with individual local costs for each suburb if this is available
         e = params.get('local_energy', e)
         e = params['c_l'] * e  # 'c_l' may be kept at 1
-
+        
+        e = e.reshape((-1,1))  # Keep this to ensure that 'local_energy' is a column vector
+        
         return e
 
     def work_energy(self, params):
@@ -51,7 +55,7 @@ class TTWML():
             e = params['c_w'] * np.log(distances / params['alpha_w'])
         else:
             e = -params['c_w'] / (distances ** params['alpha_w'])
-            #e = -params['c_w'] * np.exp(-distances ** 2 / (2 * params['alpha_w'] ** 2))
+            #e = -params['c_w'] * np.exp(-distances ** 2 / (2 * params['alpha_w'] ** 2))  # Gaussian
 
         return e
 
@@ -91,13 +95,13 @@ class TTWML():
 
         Z = np.sum(np.exp(-params['beta'] * H), axis = 0, keepdims = True)  # Sum for each workplace
 
-        # TTWArray gives the observed data
+        # TTWArray gives the observed data (Need to be supplied)
         lnP = np.multiply(TTWArray, -params['beta'] * H - np.log(Z))
         negLL = np.sum(-lnP)
         return negLL
 
 
-    def maximiseLikelihood(self, initParams, bounds, trials = 100, useDE = False, fixed_params = {}, TTWArray = None):
+    def maximiseLikelihood(self, initParams, bounds, trials = 100, useDE = False, fixed_params = {}, TTWArray = None, printAllResults = False, saveResultsIn = None):
         # InitParams and bounds are input as dictionaries
         
         keys = initParams.keys()
@@ -117,18 +121,36 @@ class TTWML():
         finalParams = []
         loglikelihood = [] 
         
-        for i in range(trials): 
+        for i in range(trials):
             # Take init as drawn from a normal distribution with mean and variance set as the initParams value
-            if trials == 1:
-                init = [initParams[key] for key in keys]
-            else:
-                init = [np.maximum(np.random.normal(initParams[key], initParams[key]), bounds[key][0]) for key in keys]  # Did not include a check against the bound maximum because None values are sometimes used. The minimizer should automatically correct this anyway
+            #if trials == 1:
+            #    init = [initParams[key] for key in keys]
+            #else:
+            init = [np.maximum(np.random.normal(initParams[key], initParams[key]), bounds[key][0]) for key in keys]  # Did not include a check against the bound maximum because None values are sometimes used. The minimizer should automatically correct this anyway
             results = minimize(self.negLogLikelihood, init, args = (keys, fixed_params, TTWArray),
                                 bounds = [bounds[x] for x in keys])
             
             if results.success:
                 finalParams.append(results.x)
                 loglikelihood.append(results.fun)
+            if printAllResults:
+                print('Trial', i)
+                print('Likelihood', results.fun)
+                print(dict(zip(keys, results.x)))
+            if saveResultsIn is not None:
+                data = [results.fun, json.dumps(dict(zip(keys, results.x))), results.success]
+                while True:
+                    try:
+                        if not os.path.exists(saveResultsIn):
+                            headers = ['NegLogLikelihood', 'Params', 'Success']
+                            with open(saveResultsIn, 'w') as f:
+                                f.write(','.join(headers) + '\n')
+                        with open(saveResultsIn, 'a') as f:
+                            f.write(','.join(map(str, data)) + '\n')
+                        break
+                    except:
+                        print("Sleeping")
+                        time.sleep(5)
 
         idx = np.nanargmin(loglikelihood)
         
@@ -183,4 +205,3 @@ def hellingerDistance(distA, distB):
     distance = (np.sqrt(distA) - np.sqrt(distB)) ** 2
     distance = np.sqrt(np.sum(distance)) / np.sqrt(2)
     return distance
-
