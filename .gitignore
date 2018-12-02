@@ -1,4 +1,4 @@
 .vscode
 Data/BootstrapTTW2016/
 Data/BootstrapTTW2011/
-PBS/
+__pycache__/*
