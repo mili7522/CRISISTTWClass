@@ -2,4 +2,6 @@
 Data/BootstrapTTW2016/
 Data/BootstrapTTW2011/
 __pycache__/*
+utils/__pycache__/*
 Temp/
+Results/*

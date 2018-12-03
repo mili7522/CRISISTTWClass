@@ -1,4 +1,5 @@
 import TTWMaximumLikelihood as TTWML
+from utils import utils
 import numpy as np
 import pandas as pd
 import json
@@ -33,27 +34,10 @@ os.makedirs(savePath, exist_ok=True)
 
 
 
-### Load Sydney Geography
-if bootstrap_id is None:
-    TTW = pd.read_table('Data/{}_TTW.csv'.format(year), sep = ',', index_col= 0)
-else:
-    TTW = pd.read_table('Data/BootstrapTTW{}/BootstrapTTW{:02d}.csv'.format(year, bootstrap_id), sep = ',', index_col= 0)
-
-rent = pd.read_csv('Data/{}_AveragedMedianValuesPerM-SA2.csv'.format(year), index_col = 0, usecols = [0,2], squeeze = True)
-
-# Transpose TTW array
-TTW = np.transpose(TTW)
-TTW = TTW.values
-
-distances = pd.read_csv("Data/{}_SA2-DriveTimes-OSRM.csv".format(year), header = None)
-distances = ((distances + distances.transpose()) / 2 / 60).values + 5
+### Load Sydney Geography and Data
+TTW, distances, rent = utils.loadData(year, model_number, bootstrap_id)
 
 a = TTWML.TTWML(distances, TTW, logForm = True if model_number in [2, 5] else False)
-
-suburbs = len(TTW)
-workDistribution = a.workDistribution
-totalHouseholds = a.totalHouseholds
-
 
 
 ###  Obtain parameters using maximum likelihood
@@ -112,7 +96,7 @@ combined_params['local_energy'] = np.array(combined_params['local_energy'])
 
 
 p = P.ravel()
-q = TTW.ravel() / totalHouseholds
+q = TTW.ravel() / a.totalHouseholds
 print('---')
-print('Hellinger Distance:', TTWML.hellingerDistance(p,q))
-print('Jensen-Shannon Divergence:', TTWML.jsDivergence(p,q))
+print('Hellinger Distance:', utils.hellingerDistance(p,q))
+print('Jensen-Shannon Divergence:', utils.jsDivergence(p,q))

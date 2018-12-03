@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
-import scipy.stats
 import json
 import os
 import time
@@ -166,14 +165,3 @@ class TTWML():
         self.mllHHDist = np.sum(TTWArray_output, axis = 1)
         return self.mllArray
         
-
-
-def hellingerDistance(p, q):
-    distance = (np.sqrt(p) - np.sqrt(q)) ** 2
-    distance = np.sqrt(np.sum(distance)) / np.sqrt(2)
-    return distance
-
-def jsDivergence(p, q):
-    m = (p + q) / 2
-    js = (scipy.stats.entropy(p, m) + scipy.stats.entropy(q, m)) / 2
-    return js
