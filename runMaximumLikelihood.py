@@ -11,7 +11,7 @@ import sys
 if len(sys.argv) > 1:
     model_number = int(sys.argv[1])
 else:
-    model_number = 2
+    model_number = 4
     # Model 1: Gravitational; 2: Log; 3: c_w = 0; 4: c_l = 0 (gravitational); 5: c_l = 0 (log)
 
 if len(sys.argv) > 2:
@@ -71,14 +71,14 @@ bounds = {'c_w': (0, None),
 
 resultList = []
 loglikelihoodList = []
-for i in range(10):
+for i in range(20):
     initParams = {'c_w': 5, 'c_l': 1, 'alpha_w': 5}
     if model_number == 3:
         del initParams['c_w']
     if model_number in [4,5]:
         del initParams['c_l']
     print(i)
-    finalParams, loglikelihood = a.maximiseLikelihood(initParams, bounds, trials = 100, fixed_params = other_params, TTWArray = TTW)
+    finalParams, loglikelihood = a.maximiseLikelihood(initParams, bounds, trials = 1000, fixed_params = other_params, TTWArray = TTW)
     if loglikelihood is not None:
         resultList.append(finalParams)
         loglikelihoodList.append(loglikelihood)
@@ -89,9 +89,9 @@ r = pd.DataFrame(resultList)
 r['NegLogLikelihood'] = loglikelihoodList
 r.to_csv(os.path.join(savePath,'MinLLRepetitions{}.csv'.format(trial_name)), index = False)
 
-print('Parameter Mean:', r.mean())
-print('Parameter Median:', r.median())
-print('Likelihood Mean:', np.mean(loglikelihoodList))
+print('Mean of repeats:\n', r.mean())
+print('Std of repeats:\n', r.std())
+
 
 ###
 print('Minimum likelihood', np.min(loglikelihoodList))
@@ -109,7 +109,6 @@ combined_params['local_energy'] = list(combined_params['local_energy'])
 with open(os.path.join(savePath,'Parameters{}.txt'.format(trial_name)), 'w') as outfile:
     json.dump(combined_params, outfile)
 combined_params['local_energy'] = np.array(combined_params['local_energy'])
-
 
 
 p = P.ravel()

@@ -3,8 +3,8 @@
 #PBS -l select=1:ncpus=1:mem=8GB
 #PBS -l walltime=24:00:00
 #PBS -J 0-49
-#PBS -o Output/stdout/Sydney2016ID^array_index^
-#PBS -e Output/stderr/Sydney2016ID^array_index^
+#PBS -o Output/stdout/Sydney2016F^array_index^
+#PBS -e Output/stderr/Sydney2016F^array_index^
 
 
 # Load modules
@@ -13,4 +13,4 @@ module load python/3.5.1
 cd $PBS_O_WORKDIR
 cd ..
 
-python runMaximumLikelihood.py 2 $PBS_ARRAY_INDEX 2016
+python runMaximumLikelihood.py 4 $PBS_ARRAY_INDEX 2016
