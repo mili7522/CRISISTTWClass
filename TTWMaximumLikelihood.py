@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
+import scipy.stats
 import json
 import os
 import time
@@ -101,7 +102,7 @@ class TTWML():
         return negLL
 
 
-    def maximiseLikelihood(self, initParams, bounds, trials = 100, useDE = False, fixed_params = {}, TTWArray = None, printAllResults = False, saveResultsIn = None):
+    def maximiseLikelihood(self, initParams, bounds, trials = 100, useDE = False, fixed_params = {}, TTWArray = None, printAllResults = False, saveAllPath = None):
         # InitParams and bounds are input as dictionaries
         
         keys = initParams.keys()
@@ -137,24 +138,26 @@ class TTWML():
                 print('Trial', i)
                 print('Likelihood', results.fun)
                 print(dict(zip(keys, results.x)))
-            if saveResultsIn is not None:
+            if saveAllPath is not None:
                 data = [results.fun, json.dumps(dict(zip(keys, results.x))), results.success]
                 while True:
                     try:
-                        if not os.path.exists(saveResultsIn):
+                        if not os.path.exists(saveAllPath):
                             headers = ['NegLogLikelihood', 'Params', 'Success']
-                            with open(saveResultsIn, 'w') as f:
+                            with open(saveAllPath, 'w') as f:
                                 f.write(','.join(headers) + '\n')
-                        with open(saveResultsIn, 'a') as f:
+                        with open(saveAllPath, 'a') as f:
                             f.write(','.join(map(str, data)) + '\n')
                         break
                     except:
                         print("Sleeping")
                         time.sleep(5)
 
-        idx = np.nanargmin(loglikelihood)
-        
-        return dict(zip(keys, finalParams[idx])), loglikelihood[idx]
+        if len(loglikelihood):
+            idx = np.nanargmin(loglikelihood)
+            return dict(zip(keys, finalParams[idx])), loglikelihood[idx]
+        else:
+            return None, None
         
 
     def probabilityFromParameters(self, params, printParams = True):
@@ -175,7 +178,7 @@ class TTWML():
         
         return P
 
-    def arrayFromProbability(self, P = None, households = None, minimiseRandomness = True):
+    def arrayFromProbability(self, P = None, households = None):
         if P is None:
             P = self.mllProbability
         
@@ -183,17 +186,10 @@ class TTWML():
             households = self.totalHouseholds
         
         suburbs = self.arraySize
-        if minimiseRandomness:
-            # First assign some of the households to minimise randomness
-            TTWArray_output = np.floor(P * households).astype(int)
-        else:
-            TTWArray_output = np.zeros_like(P)
-        
-        # Probabilistically assign remaining households
-        households_distributed = np.sum(TTWArray_output).astype(int)
-        householdTTWChoices = np.random.choice(range(suburbs[0] * suburbs[1]), size = households - households_distributed, p = P.ravel())
+
+        householdTTWChoices = np.random.choice(range(suburbs[0] * suburbs[1]), size = households, p = P.ravel(order = 'C'))
         householdPerTTW_output = np.bincount(householdTTWChoices, minlength = suburbs[0] * suburbs[1])
-        TTWArray_output += householdPerTTW_output.reshape((suburbs[0], suburbs[1]))  # Generate a TTWArray_output
+        TTWArray_output = householdPerTTW_output.reshape((suburbs[0], suburbs[1]))  # Generate a TTWArray_output
         
         self.mllArray = TTWArray_output
         self.mllHHDist = np.sum(TTWArray_output, axis = 1)
@@ -201,7 +197,12 @@ class TTWML():
         
 
 
-def hellingerDistance(distA, distB):
-    distance = (np.sqrt(distA) - np.sqrt(distB)) ** 2
+def hellingerDistance(p, q):
+    distance = (np.sqrt(p) - np.sqrt(q)) ** 2
     distance = np.sqrt(np.sum(distance)) / np.sqrt(2)
     return distance
+
+def jsDivergence(p, q):
+    m = (p + q) / 2
+    js = (scipy.stats.entropy(p, m) + scipy.stats.entropy(q, m)) / 2
+    return js

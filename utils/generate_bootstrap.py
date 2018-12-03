@@ -2,15 +2,14 @@ import numpy as np
 import pandas as pd
 import os
 
-year = 2016
+year = 2011
 
 savePath = 'Data/BootstrapTTW{}/'.format(year)
 os.makedirs(savePath, exist_ok=True)
 
 ### Load Sydney Geography
-# TTW = pd.read_table('Data/{}_TTW.csv'.format(year), sep = ',', header = None)  # TODO: Need to fix for 2011
 TTW = pd.read_table('Data/{}_TTW.csv'.format(year), sep = ',', index_col= 0, header = 0)
-suburb_id = TTW.index  # SA2_MAINCODE_2016
+suburb_id = TTW.index  # SA2_MAINCODE
 TTW = TTW.transpose().values
 
 
@@ -50,4 +49,4 @@ for i in range(50):
     redrawnHouseholds = bootstapHouseholds(realHouseholds)
     newTTW = getTTW(redrawnHouseholds)
     newTTWDf = pd.DataFrame(newTTW, index = suburb_id, columns = suburb_id).transpose()  # Transpose to match original TTW csv
-    newTTWDf.to_csv(savePath + 'BootstrapTTW{:02d}.csv'.format(i))
+    newTTWDf.to_csv(os.path.join(savePath, 'BootstrapTTW{:02d}.csv'.format(i)))
