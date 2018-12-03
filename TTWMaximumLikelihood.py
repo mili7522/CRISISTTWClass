@@ -74,23 +74,6 @@ class TTWML():
         for key, value in fixed_params.items():
             params.setdefault(key, value)
         params = self.getParameters(params)
-
-        
-        # local energy params
-        local_energy_keys = []
-        local_energy_values = []
-        for key, value in params.items():
-            if key.startswith('local_energy'):
-                try:
-                    local_energy_keys.append(int(key[-4:]))
-                    local_energy_values.append(value)
-                except ValueError:  #  'local_energy' comes from fixed_params and does not need to be recombined
-                    pass
-        local_energy = list(zip(local_energy_keys, local_energy_values))
-        if len(local_energy) > 0:
-            local_energy_sorted = sorted(local_energy)  # Sort based on 'local_energy_keys'
-            local_energy = np.array(local_energy_sorted)[:,1]  # Keep just 'local_energy_values'
-            params.update({'local_energy': local_energy})
         
         H = self.energyOfSingleHousehold(params = params)
 
@@ -102,22 +85,10 @@ class TTWML():
         return negLL
 
 
-    def maximiseLikelihood(self, initParams, bounds, trials = 100, useDE = False, fixed_params = {}, TTWArray = None, printAllResults = False, saveAllPath = None):
+    def maximiseLikelihood(self, initParams, bounds, trials = 100, fixed_params = {}, TTWArray = None, printAllResults = False, saveAllPath = None):
         # InitParams and bounds are input as dictionaries
         
         keys = initParams.keys()
-        
-        if 'local_energy' in keys:
-            initParams = initParams.copy()
-            bounds = bounds.copy()
-            local_energy = initParams['local_energy']
-            local_energy_dict = dict(zip(('local_energy_{:04d}'.format(i) for i in range(len(local_energy))), local_energy))
-            local_energy_bounds_dict = dict(zip(('local_energy_{:04d}'.format(i) for i in range(len(local_energy))), [bounds['local_energy']] * len(local_energy)))
-            initParams.update(local_energy_dict)
-            initParams.pop('local_energy')
-            bounds.update(local_energy_bounds_dict)
-            bounds.pop('local_energy')
-            keys = initParams.keys()
             
         finalParams = []
         loglikelihood = [] 
