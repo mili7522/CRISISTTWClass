@@ -7,8 +7,10 @@ import scipy.stats
 def loadData(year, model_number, bootstrap_id):
     if bootstrap_id is None or bootstrap_id == 'Data':
         TTW = pd.read_table('Data/{}_TTW.csv'.format(year), sep = ',', index_col= 0)
+    elif bootstrap_id == 'Null' or bootstrap_id == 'Shuffled':
+        TTW = pd.read_table('Data/ShuffledTTW{}.csv'.format(year), sep = ',', index_col= 0)
     else:
-        TTW = pd.read_table('Data/BootstrapTTW{}/BootstrapTTW{:02d}.csv'.format(year, bootstrap_id), sep = ',', index_col= 0)
+        TTW = pd.read_table('Data/BootstrapTTW{}/BootstrapTTW{}.csv'.format(year, bootstrap_id), sep = ',', index_col= 0)
 
     rent = pd.read_csv('Data/{}_AveragedMedianValuesPerM-SA2.csv'.format(year), index_col = 0, usecols = [0,2], squeeze = True)
 

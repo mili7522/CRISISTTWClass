@@ -16,7 +16,10 @@ else:
     # Model 1: Gravitational; 2: Log; 3: c_w = 0; 4: c_l = 0 (gravitational); 5: c_l = 0 (log)
 
 if len(sys.argv) > 2:
-    bootstrap_id = int(sys.argv[2])
+    if sys.argv[2].lower() == 'none' or sys.argv[2].lower() == 'data':
+        bootstrap_id = None
+    else:
+        bootstrap_id = "{:02d}".format(int(sys.argv[2]))
 else:
     bootstrap_id = None
 
@@ -28,7 +31,7 @@ else:
 if bootstrap_id is None:
     trial_name = 'Sydney{}_{}-Data'.format(year, model_number)
 else:
-    trial_name = 'Sydney{}_{}-{:02d}'.format(year, model_number, bootstrap_id)
+    trial_name = 'Sydney{}_{}-{}'.format(year, model_number, bootstrap_id)
 savePath = 'Results/{}'.format(trial_name)
 os.makedirs(savePath, exist_ok=True)
 
@@ -62,7 +65,7 @@ for i in range(20):
     if model_number in [4,5]:
         del initParams['c_l']
     print(i)
-    finalParams, loglikelihood = a.maximiseLikelihood(initParams, bounds, trials = 1000, fixed_params = other_params, TTWArray = TTW)
+    finalParams, loglikelihood = a.maximiseLikelihood(initParams, bounds, trials = 100, fixed_params = other_params, TTWArray = TTW)
     if loglikelihood is not None:
         resultList.append(finalParams)
         loglikelihoodList.append(loglikelihood)

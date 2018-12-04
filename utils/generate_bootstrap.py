@@ -14,13 +14,16 @@ TTW = TTW.transpose().values
 
 
 ### Get current households according to TTW data
-householdsHome = []
-householdsWork = []
-for i,row in enumerate(TTW):
-    for j,n in enumerate(row):
-        householdsHome += [i]*n
-        householdsWork += [j]*n
+def getCurrentHouseholds(TTW):
+    householdsHome = []
+    householdsWork = []
+    for i,row in enumerate(TTW):
+        for j,n in enumerate(row):
+            householdsHome += [i]*n
+            householdsWork += [j]*n
+    return householdsHome, householdsWork
 
+householdsHome, householdsWork = getCurrentHouseholds(TTW)
 realHouseholds = np.vstack([householdsHome, householdsWork]).T
 suburbs = len(suburb_id)
 
@@ -35,7 +38,7 @@ def bootstapHouseholds(households):
     redrawnHouseholds = households[redrawnIdx]
     return redrawnHouseholds
 
-def getTTW(households):
+def getTTW(households, suburbs):
     '''Creates TTW array using a numpy array of households (1st column is home suburb id, 2nd column is work suburb id)'''
     households = pd.DataFrame(households)
     distributionTable = np.zeros((suburbs, suburbs), dtype = int)
@@ -44,9 +47,10 @@ def getTTW(households):
     return distributionTable
 
 ###
-np.random.seed(10)
-for i in range(50):
-    redrawnHouseholds = bootstapHouseholds(realHouseholds)
-    newTTW = getTTW(redrawnHouseholds)
-    newTTWDf = pd.DataFrame(newTTW, index = suburb_id, columns = suburb_id).transpose()  # Transpose to match original TTW csv
-    newTTWDf.to_csv(os.path.join(savePath, 'BootstrapTTW{:02d}.csv'.format(i)))
+if __name__ == "__main__":
+    np.random.seed(10)
+    for i in range(50):
+        redrawnHouseholds = bootstapHouseholds(realHouseholds)
+        newTTW = getTTW(redrawnHouseholds, suburbs)
+        newTTWDf = pd.DataFrame(newTTW, index = suburb_id, columns = suburb_id).transpose()  # Transpose to match original TTW csv
+        newTTWDf.to_csv(os.path.join(savePath, 'BootstrapTTW{:02d}.csv'.format(i)))
