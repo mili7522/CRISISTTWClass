@@ -145,13 +145,27 @@ def printParams(params):
     print("d* (alpha_w):", params['alpha_w'])
     print("beta:", params['beta'])
 
-def analyseShuffleNull():
-    TTW_null, distances, _ = utils.loadData(year, model_number, "Null")
-    TTW_data, _, _ = utils.loadData(year, model_number, "Data")
+def analyseShuffleNull(repeats = 10):
+    from utils.generate_bootstrap import getCurrentHouseholds, getTTW
+
+    TTW, distances, _ = utils.loadData(year, model_number, bootstrap_id)
     ttwml = TTWML.TTWML(distances, TTW, logForm = False)
-    getComparisonWithData(ttwml, TTW_null, TTW_data, print_ = True)
-    getEntropy(TTW, print_ = True)
-    getAverageTimeToWork(TTW, ttwml, distances, print_ = True)
+    householdsHome, householdsWork = getCurrentHouseholds(TTW)
+    np.random.seed(10)
+
+    comparisons_with_data = []
+    entropy = []
+    time_to_work = []
+
+    for _ in range(repeats):
+        np.random.shuffle(householdsWork)  # Modifies in-place
+        shuffledHouseholds = np.vstack([householdsHome, householdsWork]).T
+        newTTW = getTTW(shuffledHouseholds, len(TTW))
+    
+        comparisons_with_data.append(getComparisonWithData(ttwml, newTTW, TTW))
+        entropy.append(getEntropy(newTTW))
+        time_to_work.append(getAverageTimeToWork(newTTW, ttwml, distances))
+    return np.array(comparisons_with_data).mean(axis = 0), np.array(entropy).mean(axis = 0), np.array(time_to_work).mean(axis = 0)
 
 ###
 if __name__ == "__main__":
