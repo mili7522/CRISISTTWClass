@@ -9,7 +9,7 @@ import scipy.stats
 ### Parameters
 model_number = 5  # Model 1: Gravitational; 2: Log; 3: c_w = 0; 4: c_l = 0 (gravitational); 5: c_l = 0 (log)
 bootstrap_id = 'Data'
-year = 2016
+year = 2011
 if bootstrap_id is not 'Data':
     bootstrap_id = '{:02d}'.format(bootstrap_id)
 
@@ -166,6 +166,12 @@ def analyseShuffleNull(repeats = 10):
         entropy.append(getEntropy(newTTW))
         time_to_work.append(getAverageTimeToWork(newTTW, ttwml, distances))
     return np.array(comparisons_with_data).mean(axis = 0), np.array(entropy).mean(axis = 0), np.array(time_to_work).mean(axis = 0)
+
+def analyseData():
+    TTW, distances, rent = utils.loadData(year, model_number, bootstrap_id)
+    ttwml = TTWML.TTWML(distances, TTW, logForm = True if model_number in [2, 5] else False)
+    getEntropy(TTW, print_ = True)
+    getAverageTimeToWork(TTW, ttwml, distances, print_ = True)
 
 ###
 if __name__ == "__main__":
