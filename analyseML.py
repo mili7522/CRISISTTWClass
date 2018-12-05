@@ -9,7 +9,7 @@ import scipy.stats
 ### Parameters
 model_number = 5  # Model 1: Gravitational; 2: Log; 3: c_w = 0; 4: c_l = 0 (gravitational); 5: c_l = 0 (log)
 bootstrap_id = 'Data'
-year = 2011
+year = 2016
 if bootstrap_id is not 'Data':
     bootstrap_id = '{:02d}'.format(bootstrap_id)
 

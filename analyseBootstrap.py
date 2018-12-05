@@ -2,12 +2,11 @@ import TTWMaximumLikelihood as TTWML
 from utils import utils
 from analyseML import loadProbability, rescaleParameters, loadParameters, generateTTWs
 from analyseML import getEnergyComponents, getLogLikelihood, getComparisonWithData, getEntropy, getAverageTimeToWork
-import analyseML
 import numpy as np
 import pandas as pd
 
 
-model_number = 5  # Model 1: Gravitational; 2: Log; 3: c_w = 0; 4: c_l = 0 (gravitational); 5: c_l = 0 (log)
+model_number = 3  # Model 1: Gravitational; 2: Log; 3: c_w = 0; 4: c_l = 0 (gravitational); 5: c_l = 0 (log)
 year = 2016
 bootstrap_repeats = 50
 
